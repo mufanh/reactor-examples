@@ -8,6 +8,7 @@
     <modules>
         <module>simple-reactor-example</module>
         <module>complex-reactor-example</module>
+        <module>thread-scheduling-reactor-example</module>
     </modules>
     
     <artifactId>reactor-examples</artifactId>
