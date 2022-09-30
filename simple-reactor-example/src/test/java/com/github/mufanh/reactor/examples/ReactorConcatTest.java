@@ -19,4 +19,17 @@ public class ReactorConcatTest {
         Flux.merge(Flux.range(1, 3), Flux.range(4, 2), Flux.range(6, 5))
                 .subscribe(e -> log.info("{}", e));
     }
+
+    @Test
+    public void concatException() {
+        Flux.concat(Flux.range(1, 3), Flux.error(new RuntimeException("appError")), Flux.range(4, 2))
+                .subscribe(e -> log.info("{}", e));
+    }
+
+    @Test
+    public void concatExceptionReturn() {
+        Flux.concat(Flux.range(1, 3), Flux.error(new RuntimeException("appError")), Flux.range(4, 2))
+                .onErrorReturn(9999)
+                .subscribe(e -> log.info("{}", e));
+    }
 }
