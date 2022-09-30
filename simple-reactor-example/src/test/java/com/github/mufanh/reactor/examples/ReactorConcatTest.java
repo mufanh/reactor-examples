@@ -32,4 +32,10 @@ public class ReactorConcatTest {
                 .onErrorReturn(9999)
                 .subscribe(e -> log.info("{}", e));
     }
+
+    @Test
+    public void zip() {
+        Flux.zip(Flux.range(1, 3), Flux.range(4, 4), Flux.range(7, 6))
+                .subscribe(e -> log.info("T1:{}, T2:{}, T3:{}", e.getT1(), e.getT2(), e.getT3()));
+    }
 }
