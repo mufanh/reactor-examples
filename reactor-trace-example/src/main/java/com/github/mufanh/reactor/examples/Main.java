@@ -52,7 +52,6 @@ public class Main {
             log.info("C");
             return s + ":" + s2;
         });
-        testMono = testMono.contextWrite(context -> context.put(TraceUtil.TRACE_ID, UUID.randomUUID().toString()));
         testMono.block();
     }
 
@@ -82,7 +81,8 @@ public class Main {
                 })), (s, s2) -> {
                     log.info("C");
                     return s + ":" + s2;
-                }).contextWrite(context -> context.put(TraceUtil.TRACE_ID, UUID.randomUUID().toString()))
+                })
+                .contextWrite(context -> context.put(TraceUtil.TRACE_ID, UUID.randomUUID().toString()))
                 .block();
     }
 

@@ -29,7 +29,6 @@ public class TraceMDCSubscriber implements CoreSubscriber<Object> {
 
     @Override
     public void onSubscribe(@NonNull Subscription s) {
-        TraceUtil.injectReactorTraceIdFromMDC(actual.currentContext());
         actual.onSubscribe(s);
     }
 
