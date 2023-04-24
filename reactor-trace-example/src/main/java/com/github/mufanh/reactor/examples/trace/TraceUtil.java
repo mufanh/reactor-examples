@@ -9,6 +9,7 @@ import reactor.core.publisher.Mono;
 import reactor.util.context.Context;
 
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 
 @Slf4j
@@ -23,6 +24,10 @@ public final class TraceUtil {
         if (StringUtils.isNotBlank(prefix) && prefix.length() >= 2) {
             PREFIX = prefix.substring(0, 2);
         }
+    }
+
+    public static <T> CompletableFuture<T> toFuture(Mono<T> publisher) {
+        return publisher.contextWrite(TraceUtil::injectReactorTraceIdFromMDC).toFuture();
     }
 
     public static <T> Mono<T> injectMonoTraceIdFromMDC(@NonNull Mono<T> publisher) {
