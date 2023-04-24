@@ -34,29 +34,33 @@ public class TraceMDCSubscriber implements CoreSubscriber<Object> {
 
     @Override
     public void onNext(Object o) {
-        Context context = actual.currentContext();
-        Optional<String> traceIdOptional = Optional.empty();
-        if (!context.isEmpty() && context.hasKey(traceIdKey)) {
-            traceIdOptional = context.getOrEmpty(traceIdKey);
-        }
-        try (MDC.MDCCloseable ignored = MDC.putCloseable(traceIdKey, traceIdOptional.orElse("N/A"))) {
-            actual.onNext(o);
-        }
+        wrapperMDC(() -> actual.onNext(o));
     }
 
     @Override
     public void onError(Throwable throwable) {
-        actual.onError(throwable);
+        wrapperMDC(() -> actual.onError(throwable));
     }
 
     @Override
     public void onComplete() {
-        actual.onComplete();
+        wrapperMDC(actual::onComplete);
     }
 
     @NonNull
     @Override
     public Context currentContext() {
         return actual.currentContext();
+    }
+
+    private void wrapperMDC(Runnable runnable) {
+        Context context = actual.currentContext();
+        Optional<String> traceIdOptional = Optional.empty();
+        if (!context.isEmpty() && context.hasKey(traceIdKey)) {
+            traceIdOptional = context.getOrEmpty(traceIdKey);
+        }
+        try (MDC.MDCCloseable ignored = MDC.putCloseable(traceIdKey, traceIdOptional.orElse("N/A"))) {
+            runnable.run();
+        }
     }
 }

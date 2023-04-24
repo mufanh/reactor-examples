@@ -8,6 +8,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.UUID;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 @Slf4j
@@ -18,6 +19,7 @@ public class Main {
             ReactorTraceHooks.setHook();
             test1();
             test2();
+            test3();
         } finally {
             ReactorTraceHooks.resetHook();
         }
@@ -66,6 +68,42 @@ public class Main {
                         return Mono.just(e);
                     }));
                 }).zipWith(Mono.just("B").doOnEach(e -> {
+                    log.info("doOnEach:B");
+                }).flatMap(e -> Mono.deferContextual(context -> {
+                    log.info("trace_id:B:{}", context.getOrEmpty(TraceUtil.TRACE_ID));
+                    return Mono.just(e);
+                })), (s, s2) -> {
+                    log.info("B");
+                    return s + ":" + s2;
+                }).zipWith(Mono.just("C").doOnEach(e -> {
+                    log.info("doOnEach:C");
+                }).flatMap(e -> Mono.deferContextual(context -> {
+                    log.info("trace_id:C:{}", context.getOrEmpty(TraceUtil.TRACE_ID));
+                    return Mono.just(e);
+                })), (s, s2) -> {
+                    log.info("C");
+                    return s + ":" + s2;
+                })
+                .contextWrite(context -> context.put(TraceUtil.TRACE_ID, UUID.randomUUID().toString()))
+                .block();
+    }
+
+    private static void test3() {
+        log.info("-----------------------------------------------------------------------");
+        Mono.error(new RuntimeException("测试异常"))
+                .doOnError(e -> {
+                    log.error("运行时异常1", e);
+                })
+                .onErrorResume(e -> {
+                    log.error("运行时异常2", e);
+                    return Mono.just("A").doOnEach(e1 -> {
+                        log.info("doOnEach:A");
+                    }).flatMap(e2 -> Mono.deferContextual(context -> {
+                        log.info("trace_id:A:{}", context.getOrEmpty(TraceUtil.TRACE_ID));
+                        return Mono.just(e2);
+                    }));
+                })
+                .zipWith(Mono.just("B").doOnEach(e -> {
                     log.info("doOnEach:B");
                 }).flatMap(e -> Mono.deferContextual(context -> {
                     log.info("trace_id:B:{}", context.getOrEmpty(TraceUtil.TRACE_ID));
