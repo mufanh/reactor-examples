@@ -8,7 +8,7 @@ public class ReactorTraceHooks {
 
     public static void setHook() {
         reactor.core.publisher.Hooks.onEachOperator(HOOK_KEY,
-                Operators.lift((scannable, coreSubscriber) -> new TraceMDCSubscriber(coreSubscriber, TraceUtil.TRACE_ID)));
+                Operators.lift((scannable, coreSubscriber) -> new TraceMDCSubscriber(coreSubscriber, "trace_id")));
     }
 
     public static void resetHook() {

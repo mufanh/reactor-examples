@@ -1,6 +1,5 @@
 package com.github.mufanh.reactor.examples.trace;
 
-
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -12,12 +11,14 @@ import reactor.util.context.Context;
 
 import java.util.Optional;
 
-
 @Slf4j
 public class TraceMDCSubscriber implements CoreSubscriber<Object> {
+
     private final String traceIdKey;
 
     private final CoreSubscriber<Object> actual;
+
+    private volatile String traceId;
 
     public TraceMDCSubscriber(CoreSubscriber<Object> actual, String traceIdKey) {
         if (StringUtils.isBlank(traceIdKey)) {
@@ -29,31 +30,35 @@ public class TraceMDCSubscriber implements CoreSubscriber<Object> {
 
     @Override
     public void onSubscribe(@NonNull Subscription s) {
+        traceId = MDC.get(traceIdKey);
         actual.onSubscribe(s);
     }
 
     @Override
     public void onNext(Object o) {
-        wrapperMDC(() -> actual.onNext(o));
+        runWithTraceId(() -> actual.onNext(o));
     }
 
     @Override
     public void onError(Throwable throwable) {
-        wrapperMDC(() -> actual.onError(throwable));
+        runWithTraceId(() -> actual.onError(throwable));
     }
 
     @Override
     public void onComplete() {
-        wrapperMDC(actual::onComplete);
+        runWithTraceId(actual::onComplete);
     }
 
     @NonNull
     @Override
     public Context currentContext() {
-        return actual.currentContext();
+        if (StringUtils.isBlank(traceId)) {
+            return actual.currentContext();
+        }
+        return actual.currentContext().put(traceIdKey, traceId);
     }
 
-    private void wrapperMDC(Runnable runnable) {
+    private void runWithTraceId(Runnable runnable) {
         Context context = actual.currentContext();
         Optional<String> traceIdOptional = Optional.empty();
         if (!context.isEmpty() && context.hasKey(traceIdKey)) {

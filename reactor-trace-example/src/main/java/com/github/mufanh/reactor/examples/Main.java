@@ -1,14 +1,14 @@
 package com.github.mufanh.reactor.examples;
 
 import com.github.mufanh.reactor.examples.trace.ReactorTraceHooks;
-import com.github.mufanh.reactor.examples.trace.TraceUtil;
 import com.google.common.base.Preconditions;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import reactor.core.publisher.Mono;
 
+import java.util.Collections;
 import java.util.UUID;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 @Slf4j
@@ -17,6 +17,7 @@ public class Main {
     public static void main(String[] args) {
         try {
             ReactorTraceHooks.setHook();
+            MDC.setContextMap(Collections.singletonMap("trace_id", UUID.randomUUID().toString()));
             test1();
             test2();
             test3();
@@ -32,14 +33,14 @@ public class Main {
             return Mono.just("A").doOnEach(e -> {
                 log.info("doOnEach:A");
             }).flatMap(e -> Mono.deferContextual(context -> {
-                log.info("trace_id:A:{}", context.getOrEmpty(TraceUtil.TRACE_ID));
+                log.info("trace_id:A:{}", context.getOrEmpty("trace_id"));
                 return Mono.just(e);
             }));
         });
         testMono = enrichMono(testMono, Mono.just("B").doOnEach(e -> {
             log.info("doOnEach:B");
         }).flatMap(e -> Mono.deferContextual(context -> {
-            log.info("trace_id:B:{}", context.getOrEmpty(TraceUtil.TRACE_ID));
+            log.info("trace_id:B:{}", context.getOrEmpty("trace_id"));
             return Mono.just(e);
         })), (s, s2) -> {
             log.info("B");
@@ -48,7 +49,7 @@ public class Main {
         testMono = enrichMono(testMono, Mono.just("C").doOnEach(e -> {
             log.info("doOnEach:C");
         }).flatMap(e -> Mono.deferContextual(context -> {
-            log.info("trace_id:C:{}", context.getOrEmpty(TraceUtil.TRACE_ID));
+            log.info("trace_id:C:{}", context.getOrEmpty("trace_id"));
             return Mono.just(e);
         })), (s, s2) -> {
             log.info("C");
@@ -64,13 +65,13 @@ public class Main {
                     return Mono.just("A").doOnEach(e -> {
                         log.info("doOnEach:A");
                     }).flatMap(e -> Mono.deferContextual(context -> {
-                        log.info("trace_id:A:{}", context.getOrEmpty(TraceUtil.TRACE_ID));
+                        log.info("trace_id:A:{}", context.getOrEmpty("trace_id"));
                         return Mono.just(e);
                     }));
                 }).zipWith(Mono.just("B").doOnEach(e -> {
                     log.info("doOnEach:B");
                 }).flatMap(e -> Mono.deferContextual(context -> {
-                    log.info("trace_id:B:{}", context.getOrEmpty(TraceUtil.TRACE_ID));
+                    log.info("trace_id:B:{}", context.getOrEmpty("trace_id"));
                     return Mono.just(e);
                 })), (s, s2) -> {
                     log.info("B");
@@ -78,13 +79,13 @@ public class Main {
                 }).zipWith(Mono.just("C").doOnEach(e -> {
                     log.info("doOnEach:C");
                 }).flatMap(e -> Mono.deferContextual(context -> {
-                    log.info("trace_id:C:{}", context.getOrEmpty(TraceUtil.TRACE_ID));
+                    log.info("trace_id:C:{}", context.getOrEmpty("trace_id"));
                     return Mono.just(e);
                 })), (s, s2) -> {
                     log.info("C");
                     return s + ":" + s2;
                 })
-                .contextWrite(context -> context.put(TraceUtil.TRACE_ID, UUID.randomUUID().toString()))
+                .contextWrite(context -> context.put("trace_id", UUID.randomUUID().toString()))
                 .block();
     }
 
@@ -99,14 +100,14 @@ public class Main {
                     return Mono.just("A").doOnEach(e1 -> {
                         log.info("doOnEach:A");
                     }).flatMap(e2 -> Mono.deferContextual(context -> {
-                        log.info("trace_id:A:{}", context.getOrEmpty(TraceUtil.TRACE_ID));
+                        log.info("trace_id:A:{}", context.getOrEmpty("trace_id"));
                         return Mono.just(e2);
                     }));
                 })
                 .zipWith(Mono.just("B").doOnEach(e -> {
                     log.info("doOnEach:B");
                 }).flatMap(e -> Mono.deferContextual(context -> {
-                    log.info("trace_id:B:{}", context.getOrEmpty(TraceUtil.TRACE_ID));
+                    log.info("trace_id:B:{}",  context.getOrEmpty("trace_id"));
                     return Mono.just(e);
                 })), (s, s2) -> {
                     log.info("B");
@@ -114,13 +115,13 @@ public class Main {
                 }).zipWith(Mono.just("C").doOnEach(e -> {
                     log.info("doOnEach:C");
                 }).flatMap(e -> Mono.deferContextual(context -> {
-                    log.info("trace_id:C:{}", context.getOrEmpty(TraceUtil.TRACE_ID));
+                    log.info("trace_id:C:{}",  context.getOrEmpty("trace_id"));
                     return Mono.just(e);
                 })), (s, s2) -> {
                     log.info("C");
                     return s + ":" + s2;
                 })
-                .contextWrite(context -> context.put(TraceUtil.TRACE_ID, UUID.randomUUID().toString()))
+                .contextWrite(context -> context.put("trace_id", UUID.randomUUID().toString()))
                 .block();
     }
 
